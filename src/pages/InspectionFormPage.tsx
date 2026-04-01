@@ -27,6 +27,7 @@ export default function InspectionFormPage() {
   const [weatherCondition, setWeatherCondition] = useState<WeatherCondition>('Sunny');
   const [temperatureF, setTemperatureF] = useState(75);
   const [notes, setNotes] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (existing) {
@@ -60,8 +61,9 @@ export default function InspectionFormPage() {
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
     const data = {
       hiveId: hive.id,
       date,
@@ -74,9 +76,9 @@ export default function InspectionFormPage() {
       notes: notes.trim(),
     };
     if (existing) {
-      updateInspection(existing.id, data);
+      await updateInspection(existing.id, data);
     } else {
-      addInspection(data);
+      await addInspection(data);
     }
     navigate(`/hives/${hive.id}`);
   };
@@ -101,7 +103,6 @@ export default function InspectionFormPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 bg-white rounded-xl border border-gray-200 p-6">
-        {/* Date & Weather */}
         <div>
           <h3 className="text-base font-semibold text-gray-800 mb-3">Date & Weather</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -122,7 +123,6 @@ export default function InspectionFormPage() {
           </div>
         </div>
 
-        {/* Queen & Brood */}
         <div>
           <h3 className="text-base font-semibold text-gray-800 mb-3">Queen & Brood</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -148,7 +148,6 @@ export default function InspectionFormPage() {
           </div>
         </div>
 
-        {/* Colony Health */}
         <div>
           <h3 className="text-base font-semibold text-gray-800 mb-3">Colony Health</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -167,7 +166,6 @@ export default function InspectionFormPage() {
           </div>
         </div>
 
-        {/* Pests & Diseases */}
         <div>
           <h3 className="text-base font-semibold text-gray-800 mb-3">Pests & Diseases</h3>
           <div className="flex flex-wrap gap-2">
@@ -188,7 +186,6 @@ export default function InspectionFormPage() {
           </div>
         </div>
 
-        {/* Notes */}
         <div>
           <label className={labelClass}>Notes</label>
           <textarea
@@ -204,8 +201,8 @@ export default function InspectionFormPage() {
           <button type="button" onClick={() => navigate(`/hives/${hive.id}`)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
             Cancel
           </button>
-          <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700">
-            {existing ? 'Update' : 'Save'} Inspection
+          <button type="submit" disabled={saving} className="px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 disabled:opacity-50">
+            {saving ? 'Saving...' : existing ? 'Update' : 'Save'} Inspection
           </button>
         </div>
       </form>

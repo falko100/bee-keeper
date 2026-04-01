@@ -43,11 +43,3 @@ export const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-export const STORAGE_KEYS = {
-  HIVES: 'beekeeper_hives',
-  INSPECTIONS: 'beekeeper_inspections',
-  TASKS: 'beekeeper_tasks',
-  SCHEMA_VERSION: 'beekeeper_schema_version',
-} as const;
-
-export const CURRENT_SCHEMA_VERSION = 1;

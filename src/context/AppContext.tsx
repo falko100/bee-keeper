@@ -1,7 +1,7 @@
-import { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useReducer, useEffect, useState, type ReactNode } from 'react';
 import type { AppState, AppAction, Hive, Inspection, Task } from '../lib/types';
-import { getItem, setItem, initStorage } from '../lib/storage';
-import { STORAGE_KEYS } from '../lib/constants';
+import { supabase } from '../lib/supabase';
+import { useAuth } from './AuthContext';
 
 const initialState: AppState = {
   hives: [],
@@ -48,37 +48,94 @@ function appReducer(state: AppState, action: AppAction): AppState {
 interface AppContextType {
   state: AppState;
   dispatch: React.Dispatch<AppAction>;
+  loading: boolean;
+  refreshData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
 
+function mapHiveFromDb(row: Record<string, unknown>): Hive {
+  return {
+    id: row.id as string,
+    userId: row.user_id as string,
+    name: row.name as string,
+    location: (row.location as string) || '',
+    type: row.type as Hive['type'],
+    dateEstablished: row.date_established as string,
+    notes: (row.notes as string) || '',
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+function mapInspectionFromDb(row: Record<string, unknown>): Inspection {
+  return {
+    id: row.id as string,
+    hiveId: row.hive_id as string,
+    userId: row.user_id as string,
+    date: row.date as string,
+    queenSpotted: row.queen_spotted as boolean,
+    broodPattern: row.brood_pattern as Inspection['broodPattern'],
+    temperament: row.temperament as Inspection['temperament'],
+    honeyStores: row.honey_stores as Inspection['honeyStores'],
+    pestsAndDiseases: (row.pests_and_diseases as string[]) || [],
+    weather: {
+      condition: row.weather_condition as Inspection['weather']['condition'],
+      temperatureF: row.weather_temperature_f as number,
+    },
+    notes: (row.notes as string) || '',
+    healthScore: row.health_score as number,
+    createdAt: row.created_at as string,
+  };
+}
+
+function mapTaskFromDb(row: Record<string, unknown>): Task {
+  return {
+    id: row.id as string,
+    userId: row.user_id as string,
+    hiveId: (row.hive_id as string) || null,
+    title: row.title as string,
+    description: (row.description as string) || '',
+    dueDate: row.due_date as string,
+    completed: row.completed as boolean,
+    recurring: row.recurring as Task['recurring'],
+    createdAt: row.created_at as string,
+  };
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  const refreshData = async () => {
+    if (!user) {
+      dispatch({ type: 'SET_HIVES', payload: [] });
+      dispatch({ type: 'SET_INSPECTIONS', payload: [] });
+      dispatch({ type: 'SET_TASKS', payload: [] });
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const [hivesRes, inspRes, tasksRes] = await Promise.all([
+      supabase.from('hives').select('*'),
+      supabase.from('inspections').select('*'),
+      supabase.from('tasks').select('*'),
+    ]);
+
+    dispatch({ type: 'SET_HIVES', payload: (hivesRes.data || []).map(mapHiveFromDb) });
+    dispatch({ type: 'SET_INSPECTIONS', payload: (inspRes.data || []).map(mapInspectionFromDb) });
+    dispatch({ type: 'SET_TASKS', payload: (tasksRes.data || []).map(mapTaskFromDb) });
+    setLoading(false);
+  };
 
   useEffect(() => {
-    initStorage();
-    const hives = getItem<Hive[]>(STORAGE_KEYS.HIVES) || [];
-    const inspections = getItem<Inspection[]>(STORAGE_KEYS.INSPECTIONS) || [];
-    const tasks = getItem<Task[]>(STORAGE_KEYS.TASKS) || [];
-    dispatch({ type: 'SET_HIVES', payload: hives });
-    dispatch({ type: 'SET_INSPECTIONS', payload: inspections });
-    dispatch({ type: 'SET_TASKS', payload: tasks });
-  }, []);
-
-  useEffect(() => {
-    setItem(STORAGE_KEYS.HIVES, state.hives);
-  }, [state.hives]);
-
-  useEffect(() => {
-    setItem(STORAGE_KEYS.INSPECTIONS, state.inspections);
-  }, [state.inspections]);
-
-  useEffect(() => {
-    setItem(STORAGE_KEYS.TASKS, state.tasks);
-  }, [state.tasks]);
+    refreshData();
+  }, [user]);
 
   return (
-    <AppContext.Provider value={{ state, dispatch }}>
+    <AppContext.Provider value={{ state, dispatch, loading, refreshData }}>
       {children}
     </AppContext.Provider>
   );

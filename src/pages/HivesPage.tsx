@@ -1,13 +1,23 @@
 import { useState } from 'react';
 import { Plus, Warehouse } from 'lucide-react';
 import { useHives } from '../hooks/useHives';
+import { useAppContext } from '../context/AppContext';
 import HiveCard from '../components/hives/HiveCard';
 import HiveForm from '../components/hives/HiveForm';
 import EmptyState from '../components/ui/EmptyState';
 
 export default function HivesPage() {
   const { hives, addHive } = useHives();
+  const { loading } = useAppContext();
   const [showForm, setShowForm] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600" />
+      </div>
+    );
+  }
 
   return (
     <div>

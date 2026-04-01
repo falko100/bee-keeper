@@ -1,11 +1,11 @@
 export interface Hive {
   id: string;
+  userId: string;
   name: string;
   location: string;
   type: HiveType;
   dateEstablished: string;
   notes: string;
-  shareToken?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -15,6 +15,7 @@ export type HiveType = 'Langstroth' | 'Top Bar' | 'Warre' | 'Flow' | 'Other';
 export interface Inspection {
   id: string;
   hiveId: string;
+  userId: string;
   date: string;
   queenSpotted: boolean;
   broodPattern: BroodPattern;
@@ -40,6 +41,7 @@ export type WeatherCondition = 'Sunny' | 'Cloudy' | 'Rainy' | 'Windy' | 'Overcas
 
 export interface Task {
   id: string;
+  userId: string;
   hiveId: string | null;
   title: string;
   description: string;
@@ -50,6 +52,21 @@ export interface Task {
 }
 
 export type RecurringType = 'none' | 'weekly' | 'biweekly' | 'monthly';
+
+export interface HiveShare {
+  id: string;
+  hiveId: string;
+  ownerId: string;
+  sharedWithId: string;
+  permission: 'view' | 'edit';
+  createdAt: string;
+}
+
+export interface Profile {
+  id: string;
+  email: string;
+  displayName: string;
+}
 
 export interface SeasonalTip {
   id: string;

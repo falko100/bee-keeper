@@ -1,6 +1,7 @@
 import { useAppContext } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 import type { Task, RecurringType } from '../lib/types';
-import { generateId } from '../lib/utils';
 
 export interface TaskInput {
   hiveId: string | null;
@@ -21,33 +22,72 @@ function getNextDueDate(currentDue: string, recurring: RecurringType): string {
   return date.toISOString().split('T')[0];
 }
 
+function mapRow(row: Record<string, unknown>): Task {
+  return {
+    id: row.id as string,
+    userId: row.user_id as string,
+    hiveId: (row.hive_id as string) || null,
+    title: row.title as string,
+    description: (row.description as string) || '',
+    dueDate: row.due_date as string,
+    completed: row.completed as boolean,
+    recurring: row.recurring as RecurringType,
+    createdAt: row.created_at as string,
+  };
+}
+
 export function useTasks() {
   const { state, dispatch } = useAppContext();
+  const { user } = useAuth();
 
-  const addTask = (data: TaskInput) => {
-    const task: Task = {
-      id: generateId(),
-      ...data,
-      completed: false,
-      createdAt: new Date().toISOString(),
-    };
+  const addTask = async (data: TaskInput) => {
+    if (!user) return null;
+    const { data: row, error } = await supabase
+      .from('tasks')
+      .insert({
+        user_id: user.id,
+        hive_id: data.hiveId,
+        title: data.title,
+        description: data.description,
+        due_date: data.dueDate,
+        recurring: data.recurring,
+      })
+      .select()
+      .single();
+
+    if (error || !row) return null;
+    const task = mapRow(row);
     dispatch({ type: 'ADD_TASK', payload: task });
     return task;
   };
 
-  const updateTask = (id: string, data: Partial<Omit<Task, 'id' | 'createdAt'>>) => {
-    const existing = state.tasks.find(t => t.id === id);
-    if (!existing) return;
-    dispatch({ type: 'UPDATE_TASK', payload: { ...existing, ...data } });
+  const updateTask = async (id: string, data: Partial<Omit<Task, 'id' | 'createdAt' | 'userId'>>) => {
+    const dbData: Record<string, unknown> = {};
+    if (data.title !== undefined) dbData.title = data.title;
+    if (data.description !== undefined) dbData.description = data.description;
+    if (data.hiveId !== undefined) dbData.hive_id = data.hiveId;
+    if (data.dueDate !== undefined) dbData.due_date = data.dueDate;
+    if (data.recurring !== undefined) dbData.recurring = data.recurring;
+    if (data.completed !== undefined) dbData.completed = data.completed;
+
+    const { data: row, error } = await supabase
+      .from('tasks')
+      .update(dbData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error || !row) return;
+    dispatch({ type: 'UPDATE_TASK', payload: mapRow(row) });
   };
 
-  const completeTask = (id: string) => {
+  const completeTask = async (id: string) => {
     const existing = state.tasks.find(t => t.id === id);
     if (!existing) return;
-    dispatch({ type: 'UPDATE_TASK', payload: { ...existing, completed: true } });
+    await updateTask(id, { completed: true });
     if (existing.recurring !== 'none') {
       const nextDue = getNextDueDate(existing.dueDate, existing.recurring);
-      addTask({
+      await addTask({
         hiveId: existing.hiveId,
         title: existing.title,
         description: existing.description,
@@ -57,8 +97,9 @@ export function useTasks() {
     }
   };
 
-  const deleteTask = (id: string) => {
-    dispatch({ type: 'DELETE_TASK', payload: id });
+  const deleteTask = async (id: string) => {
+    const { error } = await supabase.from('tasks').delete().eq('id', id);
+    if (!error) dispatch({ type: 'DELETE_TASK', payload: id });
   };
 
   const getTasksForHive = (hiveId: string) =>
