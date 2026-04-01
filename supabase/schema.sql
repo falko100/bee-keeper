@@ -1,7 +1,11 @@
 -- BeeKeeper Database Schema
 -- Run this in Supabase SQL Editor (https://supabase.com/dashboard > SQL Editor)
 
--- 1. Profiles table (extends auth.users)
+-- ============================================================
+-- 1. Create ALL tables first (no policies yet, avoids ordering issues)
+-- ============================================================
+
+-- Profiles (extends auth.users)
 create table public.profiles (
   id uuid references auth.users on delete cascade primary key,
   email text not null,
@@ -9,33 +13,7 @@ create table public.profiles (
   created_at timestamptz default now()
 );
 
-alter table public.profiles enable row level security;
-
-create policy "Users can view any profile"
-  on public.profiles for select
-  to authenticated
-  using (true);
-
-create policy "Users can update own profile"
-  on public.profiles for update
-  to authenticated
-  using (auth.uid() = id);
-
--- Auto-create profile on signup
-create or replace function public.handle_new_user()
-returns trigger as $$
-begin
-  insert into public.profiles (id, email, display_name)
-  values (new.id, new.email, split_part(new.email, '@', 1));
-  return new;
-end;
-$$ language plpgsql security definer;
-
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();
-
--- 2. Hives table
+-- Hives
 create table public.hives (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references auth.users on delete cascade not null,
@@ -48,39 +26,18 @@ create table public.hives (
   updated_at timestamptz default now()
 );
 
-alter table public.hives enable row level security;
+-- Hive Shares (user-to-user sharing) — must exist before policies reference it
+create table public.hive_shares (
+  id uuid default gen_random_uuid() primary key,
+  hive_id uuid references public.hives on delete cascade not null,
+  owner_id uuid references auth.users on delete cascade not null,
+  shared_with_id uuid references auth.users on delete cascade not null,
+  permission text not null default 'view',
+  created_at timestamptz default now(),
+  unique(hive_id, shared_with_id)
+);
 
-create policy "Users can view own hives"
-  on public.hives for select
-  to authenticated
-  using (user_id = auth.uid());
-
-create policy "Users can view shared hives"
-  on public.hives for select
-  to authenticated
-  using (
-    id in (
-      select hive_id from public.hive_shares
-      where shared_with_id = auth.uid()
-    )
-  );
-
-create policy "Users can insert own hives"
-  on public.hives for insert
-  to authenticated
-  with check (user_id = auth.uid());
-
-create policy "Users can update own hives"
-  on public.hives for update
-  to authenticated
-  using (user_id = auth.uid());
-
-create policy "Users can delete own hives"
-  on public.hives for delete
-  to authenticated
-  using (user_id = auth.uid());
-
--- 3. Inspections table
+-- Inspections
 create table public.inspections (
   id uuid default gen_random_uuid() primary key,
   hive_id uuid references public.hives on delete cascade not null,
@@ -98,39 +55,7 @@ create table public.inspections (
   created_at timestamptz default now()
 );
 
-alter table public.inspections enable row level security;
-
-create policy "Users can view inspections for own hives"
-  on public.inspections for select
-  to authenticated
-  using (user_id = auth.uid());
-
-create policy "Users can view inspections for shared hives"
-  on public.inspections for select
-  to authenticated
-  using (
-    hive_id in (
-      select hive_id from public.hive_shares
-      where shared_with_id = auth.uid()
-    )
-  );
-
-create policy "Users can insert inspections for own hives"
-  on public.inspections for insert
-  to authenticated
-  with check (user_id = auth.uid());
-
-create policy "Users can update own inspections"
-  on public.inspections for update
-  to authenticated
-  using (user_id = auth.uid());
-
-create policy "Users can delete own inspections"
-  on public.inspections for delete
-  to authenticated
-  using (user_id = auth.uid());
-
--- 4. Tasks table
+-- Tasks
 create table public.tasks (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references auth.users on delete cascade not null,
@@ -143,62 +68,132 @@ create table public.tasks (
   created_at timestamptz default now()
 );
 
+-- ============================================================
+-- 2. Enable RLS on all tables
+-- ============================================================
+
+alter table public.profiles enable row level security;
+alter table public.hives enable row level security;
+alter table public.hive_shares enable row level security;
+alter table public.inspections enable row level security;
 alter table public.tasks enable row level security;
 
-create policy "Users can view own tasks"
-  on public.tasks for select
+-- ============================================================
+-- 3. Policies — all tables exist, safe to reference hive_shares
+-- ============================================================
+
+-- Profiles policies
+create policy "Users can view any profile"
+  on public.profiles for select
+  to authenticated using (true);
+
+create policy "Users can update own profile"
+  on public.profiles for update
+  to authenticated using (auth.uid() = id);
+
+-- Hives policies
+create policy "Users can view own hives"
+  on public.hives for select
+  to authenticated using (user_id = auth.uid());
+
+create policy "Users can view shared hives"
+  on public.hives for select
   to authenticated
-  using (user_id = auth.uid());
+  using (
+    id in (select hive_id from public.hive_shares where shared_with_id = auth.uid())
+  );
 
-create policy "Users can insert own tasks"
-  on public.tasks for insert
-  to authenticated
-  with check (user_id = auth.uid());
+create policy "Users can insert own hives"
+  on public.hives for insert
+  to authenticated with check (user_id = auth.uid());
 
-create policy "Users can update own tasks"
-  on public.tasks for update
-  to authenticated
-  using (user_id = auth.uid());
+create policy "Users can update own hives"
+  on public.hives for update
+  to authenticated using (user_id = auth.uid());
 
-create policy "Users can delete own tasks"
-  on public.tasks for delete
-  to authenticated
-  using (user_id = auth.uid());
+create policy "Users can delete own hives"
+  on public.hives for delete
+  to authenticated using (user_id = auth.uid());
 
--- 5. Hive Shares table (user-to-user sharing)
-create table public.hive_shares (
-  id uuid default gen_random_uuid() primary key,
-  hive_id uuid references public.hives on delete cascade not null,
-  owner_id uuid references auth.users on delete cascade not null,
-  shared_with_id uuid references auth.users on delete cascade not null,
-  permission text not null default 'view',
-  created_at timestamptz default now(),
-  unique(hive_id, shared_with_id)
-);
-
-alter table public.hive_shares enable row level security;
-
+-- Hive Shares policies
 create policy "Owners can view shares for their hives"
   on public.hive_shares for select
-  to authenticated
-  using (owner_id = auth.uid());
+  to authenticated using (owner_id = auth.uid());
 
 create policy "Shared users can view their shares"
   on public.hive_shares for select
-  to authenticated
-  using (shared_with_id = auth.uid());
+  to authenticated using (shared_with_id = auth.uid());
 
 create policy "Owners can create shares"
   on public.hive_shares for insert
-  to authenticated
-  with check (owner_id = auth.uid());
+  to authenticated with check (owner_id = auth.uid());
 
 create policy "Owners can delete shares"
   on public.hive_shares for delete
-  to authenticated
-  using (owner_id = auth.uid());
+  to authenticated using (owner_id = auth.uid());
 
--- 6. Indexes for performance
+-- Inspections policies
+create policy "Users can view inspections for own hives"
+  on public.inspections for select
+  to authenticated using (user_id = auth.uid());
+
+create policy "Users can view inspections for shared hives"
+  on public.inspections for select
+  to authenticated
+  using (
+    hive_id in (select hive_id from public.hive_shares where shared_with_id = auth.uid())
+  );
+
+create policy "Users can insert inspections for own hives"
+  on public.inspections for insert
+  to authenticated with check (user_id = auth.uid());
+
+create policy "Users can update own inspections"
+  on public.inspections for update
+  to authenticated using (user_id = auth.uid());
+
+create policy "Users can delete own inspections"
+  on public.inspections for delete
+  to authenticated using (user_id = auth.uid());
+
+-- Tasks policies
+create policy "Users can view own tasks"
+  on public.tasks for select
+  to authenticated using (user_id = auth.uid());
+
+create policy "Users can insert own tasks"
+  on public.tasks for insert
+  to authenticated with check (user_id = auth.uid());
+
+create policy "Users can update own tasks"
+  on public.tasks for update
+  to authenticated using (user_id = auth.uid());
+
+create policy "Users can delete own tasks"
+  on public.tasks for delete
+  to authenticated using (user_id = auth.uid());
+
+-- ============================================================
+-- 4. Auto-create profile on signup
+-- ============================================================
+
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, email, display_name)
+  values (new.id, new.email, split_part(new.email, '@', 1));
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- ============================================================
+-- 5. Indexes
+-- ============================================================
+
 create index idx_hives_user_id on public.hives(user_id);
 create index idx_inspections_hive_id on public.inspections(hive_id);
 create index idx_inspections_user_id on public.inspections(user_id);
