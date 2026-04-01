@@ -14,7 +14,7 @@ export const SEASONAL_TIPS: SeasonalTip[] = [
   { id: '2d', month: 2, title: 'Clean Equipment', content: 'Use winter downtime to scrape, repair, and paint spare hive bodies and frames. Have clean equipment ready for spring splits.', category: 'general' },
 
   // March
-  { id: '3a', month: 3, title: 'First Spring Inspection', content: 'On a warm day (55°F+), do a quick inspection. Check for queen presence (eggs/larvae), food stores, and overall colony strength.', category: 'inspection' },
+  { id: '3a', month: 3, title: 'First Spring Inspection', content: 'On a warm day (13°C+), do a quick inspection. Check for queen presence (eggs/larvae), food stores, and overall colony strength.', category: 'inspection' },
   { id: '3b', month: 3, title: 'Begin Spring Feeding', content: 'Start feeding 1:1 sugar syrup to stimulate brood production. Add pollen patties if natural pollen is not yet available.', category: 'feeding' },
   { id: '3c', month: 3, title: 'Check for Disease', content: 'Look for signs of Nosema (dysentery streaks on hive), American Foulbrood (sunken cappings), and other diseases during your first inspection.', category: 'treatment' },
   { id: '3d', month: 3, title: 'Reverse Brood Boxes', content: 'If the cluster has moved to the upper box, reverse the boxes to give the queen room to expand the brood nest downward.', category: 'general' },
@@ -59,7 +59,7 @@ export const SEASONAL_TIPS: SeasonalTip[] = [
   { id: '10a', month: 10, title: 'Winterize Hives', content: 'Add mouse guards, reduce entrances, and ensure upper ventilation. In cold climates, consider wrapping hives with insulation or tar paper.', category: 'general' },
   { id: '10b', month: 10, title: 'Final Mite Check', content: 'Do one last mite count. If levels are still high, apply an oxalic acid treatment during the broodless period in late fall.', category: 'treatment' },
   { id: '10c', month: 10, title: 'Wind Protection', content: 'Set up windbreaks if your apiary is in an exposed location. Secure hive tops with bricks or straps to prevent them from blowing off.', category: 'general' },
-  { id: '10d', month: 10, title: 'Last Feeding Window', content: 'This is your last chance to feed. Bees cannot process syrup effectively once temperatures stay below 50°F consistently.', category: 'feeding' },
+  { id: '10d', month: 10, title: 'Last Feeding Window', content: 'This is your last chance to feed. Bees cannot process syrup effectively once temperatures stay below 10°C consistently.', category: 'feeding' },
 
   // November
   { id: '11a', month: 11, title: 'Hands-Off Period Begins', content: 'Avoid opening hives. You can still observe entrance activity on warm days and listen at the side of the hive for the cluster\'s gentle hum.', category: 'inspection' },

@@ -127,7 +127,7 @@ export default function HiveDetailPage() {
                   <div>
                     <p className="font-medium text-gray-900">{formatDate(insp.date)}</p>
                     <p className="text-xs text-gray-500">
-                      {insp.weather.condition} | {insp.weather.temperatureF}°F
+                      {insp.weather.condition} | {insp.weather.temperatureC}°C
                     </p>
                   </div>
                 </div>

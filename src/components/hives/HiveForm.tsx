@@ -14,7 +14,7 @@ interface HiveFormProps {
 export default function HiveForm({ open, onClose, onSubmit, hive }: HiveFormProps) {
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
-  const [type, setType] = useState<HiveType>('Langstroth');
+  const [type, setType] = useState<HiveType>('Spaarkast');
   const [dateEstablished, setDateEstablished] = useState(toISODateString());
   const [notes, setNotes] = useState('');
 

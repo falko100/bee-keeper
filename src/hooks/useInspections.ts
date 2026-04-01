@@ -29,7 +29,7 @@ function mapRow(row: Record<string, unknown>): Inspection {
     pestsAndDiseases: (row.pests_and_diseases as string[]) || [],
     weather: {
       condition: row.weather_condition as Weather['condition'],
-      temperatureF: row.weather_temperature_f as number,
+      temperatureC: row.weather_temperature_c as number,
     },
     notes: (row.notes as string) || '',
     healthScore: row.health_score as number,
@@ -56,7 +56,7 @@ export function useInspections() {
         honey_stores: data.honeyStores,
         pests_and_diseases: data.pestsAndDiseases,
         weather_condition: data.weather.condition,
-        weather_temperature_f: data.weather.temperatureF,
+        weather_temperature_c: data.weather.temperatureC,
         notes: data.notes,
         health_score: healthScore,
       })
@@ -81,7 +81,7 @@ export function useInspections() {
         honey_stores: data.honeyStores,
         pests_and_diseases: data.pestsAndDiseases,
         weather_condition: data.weather.condition,
-        weather_temperature_f: data.weather.temperatureF,
+        weather_temperature_c: data.weather.temperatureC,
         notes: data.notes,
         health_score: healthScore,
       })

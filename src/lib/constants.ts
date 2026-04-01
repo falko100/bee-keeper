@@ -1,6 +1,6 @@
 import type { HiveType, BroodPattern, Temperament, HoneyStores, WeatherCondition, RecurringType, TipCategory } from './types';
 
-export const HIVE_TYPES: HiveType[] = ['Langstroth', 'Top Bar', 'Warre', 'Flow', 'Other'];
+export const HIVE_TYPES: HiveType[] = ['Spaarkast', 'Simplex', 'Segeberger', 'Dadant', 'Langstroth', 'Warré', 'Other'];
 
 export const BROOD_PATTERNS: BroodPattern[] = ['Excellent', 'Good', 'Fair', 'Poor', 'None'];
 

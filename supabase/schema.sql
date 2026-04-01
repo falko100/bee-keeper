@@ -19,7 +19,7 @@ create table public.hives (
   user_id uuid references auth.users on delete cascade not null,
   name text not null,
   location text default '',
-  type text not null default 'Langstroth',
+  type text not null default 'Spaarkast',
   date_established date not null default current_date,
   notes text default '',
   created_at timestamptz default now(),
@@ -49,7 +49,7 @@ create table public.inspections (
   honey_stores text not null default 'Adequate',
   pests_and_diseases text[] default '{}',
   weather_condition text not null default 'Sunny',
-  weather_temperature_f integer default 75,
+  weather_temperature_c integer default 20,
   notes text default '',
   health_score integer not null default 5,
   created_at timestamptz default now()

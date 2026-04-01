@@ -10,7 +10,7 @@ export interface Hive {
   updatedAt: string;
 }
 
-export type HiveType = 'Langstroth' | 'Top Bar' | 'Warre' | 'Flow' | 'Other';
+export type HiveType = 'Spaarkast' | 'Simplex' | 'Segeberger' | 'Dadant' | 'Langstroth' | 'Warré' | 'Other';
 
 export interface Inspection {
   id: string;
@@ -34,7 +34,7 @@ export type HoneyStores = 'Abundant' | 'Adequate' | 'Low' | 'Empty';
 
 export interface Weather {
   condition: WeatherCondition;
-  temperatureF: number;
+  temperatureC: number;
 }
 
 export type WeatherCondition = 'Sunny' | 'Cloudy' | 'Rainy' | 'Windy' | 'Overcast';

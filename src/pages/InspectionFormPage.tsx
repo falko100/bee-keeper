@@ -25,7 +25,7 @@ export default function InspectionFormPage() {
   const [honeyStores, setHoneyStores] = useState<HoneyStores>('Adequate');
   const [selectedPests, setSelectedPests] = useState<string[]>([]);
   const [weatherCondition, setWeatherCondition] = useState<WeatherCondition>('Sunny');
-  const [temperatureF, setTemperatureF] = useState(75);
+  const [temperatureC, setTemperatureC] = useState(20);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -38,7 +38,7 @@ export default function InspectionFormPage() {
       setHoneyStores(existing.honeyStores);
       setSelectedPests(existing.pestsAndDiseases);
       setWeatherCondition(existing.weather.condition);
-      setTemperatureF(existing.weather.temperatureF);
+      setTemperatureC(existing.weather.temperatureC);
       setNotes(existing.notes);
     }
   }, [existing]);
@@ -72,7 +72,7 @@ export default function InspectionFormPage() {
       temperament,
       honeyStores,
       pestsAndDiseases: selectedPests,
-      weather: { condition: weatherCondition, temperatureF },
+      weather: { condition: weatherCondition, temperatureC },
       notes: notes.trim(),
     };
     if (existing) {
@@ -117,8 +117,8 @@ export default function InspectionFormPage() {
               </select>
             </div>
             <div>
-              <label className={labelClass}>Temperature (°F)</label>
-              <input type="number" value={temperatureF} onChange={e => setTemperatureF(Number(e.target.value))} className={inputClass} min={-20} max={130} />
+              <label className={labelClass}>Temperature (°C)</label>
+              <input type="number" value={temperatureC} onChange={e => setTemperatureC(Number(e.target.value))} className={inputClass} min={-30} max={50} />
             </div>
           </div>
         </div>

@@ -81,7 +81,7 @@ function mapInspectionFromDb(row: Record<string, unknown>): Inspection {
     pestsAndDiseases: (row.pests_and_diseases as string[]) || [],
     weather: {
       condition: row.weather_condition as Inspection['weather']['condition'],
-      temperatureF: row.weather_temperature_f as number,
+      temperatureC: row.weather_temperature_c as number,
     },
     notes: (row.notes as string) || '',
     healthScore: row.health_score as number,
